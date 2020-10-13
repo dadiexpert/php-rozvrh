@@ -1,0 +1,144 @@
+<?php 
+	session_start();
+?>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+<?php 
+	if(empty($_SESSION["jazyk"]))
+	{
+		$_SESSION["jazyk"]="sk";
+	}
+
+	if(!empty($_GET["jazyk"]))
+	{
+		$_SESSION["jazyk"]=$_GET["jazyk"];
+	}
+	
+	var_dump($_SESSION["jazyk"]);
+
+	
+
+	echo "<br>";
+	echo "<br>";
+?>
+	
+	<a href="http://localhost/magyerka/tabulka.php?jazyk=sk">SK</a>
+	<a href="http://localhost/magyerka/tabulka.php?jazyk=en">EN</a>
+	
+	
+<?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+
+// Create connection
+$conn = mysqli_connect($servername, $username, $password, "magyerka");
+
+// Check connection
+if (!$conn) {
+  die("Connection failed: " . mysqli_connect_error());
+}
+echo "Connected successfully";
+
+
+//$sql = "SELECT den, hodina, predmet FROM rozvrh WHERE trieda='4b' AND skupina=2";
+if(!empty($_GET['trieda']))
+{
+	$where=" WHERE trieda='".$_GET["trieda"]."' AND skupina='".$_GET["skupina"]."'";
+}
+else
+{
+	$where="";
+}	
+$sql = "SELECT * FROM rozvrh $where";
+
+
+$result = mysqli_query($conn, $sql);
+
+if (mysqli_num_rows($result) > 0) {
+  // output data of each row
+  while($row = mysqli_fetch_assoc($result)) {
+    $rozvrh[$row["den"]][$row["hodina"]]=preloz($row["predmet"],$conn);
+  }
+} else {
+  echo "0 results";
+}
+
+//mysqli_close($conn);
+
+echo "<br>";
+echo "<br>";
+?>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+		<title> Stránka 1 </title>
+</head>
+</html>
+
+<?php
+$sql1="SELECT trieda,skupina FROM rozvrh GROUP BY trieda,skupina";
+$result1= mysqli_query($conn,$sql1);
+	
+	while($row1 = mysqli_fetch_assoc($result1))
+	{
+		echo "<a href=tabulka.php?trieda=".$row1["trieda"]."&amp;skupina=".$row1["skupina"].">".$row1["trieda"]." - ".$row1["skupina"].".sk</a></br>";
+	}
+
+echo "<br>";
+echo "<br>";
+?>
+
+
+<?php
+
+	echo preloz("nadpis",$conn);
+	
+?>
+
+
+<?php
+	
+	$dni = array("Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok");
+	$hodiny = array("0", "1", "2", "3", "4", "5", "6", "7");
+	$i = 0;
+	//$rozvrh[2][2]= "PFG";
+	//$rozvrh[2][3]= "PFG";
+?>
+	<table border=1 class="table">
+		<tr>
+			<td>&nbsp;</td>
+			<?php foreach ($hodiny As $hodina):?>
+			<td><?php echo $hodina;?></td>
+			<?php endforeach;?>
+		</tr>
+		
+		<?php foreach ($dni As $i=> $den):?>
+			<tr>
+				<td><?php echo $den;?></td>
+				<?php foreach ($hodiny As $j=> $hodina):?>
+				<td><?php echo @$rozvrh[$i][$j];?></td>
+				<?php $i++;?>
+				<?php endforeach;?>
+			</tr>
+			
+		<?php endforeach;?>
+	</table>
+		
+	
+<?php
+			function preloz($retazec,$conn)
+			{
+				$sql="SELECT preklad FROM preklad WHERE retazec='".$retazec."' AND jazyk='".$_SESSION["jazyk"]."'";
+				$result=mysqli_query($conn,$sql);
+				$row=mysqli_fetch_array($result);
+				
+				return !empty($row["preklad"])?$row["preklad"]:$retazec;
+			}
+	
+	
+	
+	
+	
+	
